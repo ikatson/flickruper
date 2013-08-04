@@ -262,6 +262,10 @@ class MultithreadedUploader(object):
         """Get a list of filenames that should be uploaded to flickr."""
         photos_to_upload = []
         for fname in os.listdir(self.dirname):
+            # Ignore hidden files.
+            if fname.startswith('.'):
+                log.debug('Ignoring hidden file "%s"', fname)
+                continue
             fname = os.path.join(self.dirname, fname)
             if not os.path.isfile(fname):
                 continue
@@ -286,7 +290,7 @@ class MultithreadedUploader(object):
             callback=functools.partial(self.upload_callback, filename),
             tags=self.tags)
         photo_id = photo.find('photoid').text
-        log.info('Uploaded %s', filename)
+        log.debug('Uploaded %s', filename)
         if not pset:
             pset, created = self.get_or_create_photoset(
                 primary_photo_id=photo_id)
