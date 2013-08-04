@@ -3,8 +3,9 @@ flickrupper
 
 Flickr CLI multi-threaded uploader, can resume uploads on failures.
 
-Now that Flickr gives everyone 1TB of space, it's very handy
-to store all your original photos there. This tool helps upload lots of files to Flickr at once.
+Now that Flickr gives everyone 1TB of space, it's very handy to store all
+your original photos there. This tool helps upload lots of files to Flickr at
+once.
 
 Installation
 ============
@@ -15,17 +16,18 @@ The only dependency is "flickrapi".
 
 or, on Debian/Ubuntu
 
-    sudo apt-get install flickrapi
+    sudo apt-get install python-flickrapi
 
 
 Usage
 =====
 
-*flickrupper* uploads a single directory at once, without recursion into subdirectories.
-It cannot upload a single file or several files. This is by design, to reduce complexity.
+**flickrupper** uploads a single directory at once, without recursion into
+subdirectories. It cannot upload a single file or several files. This is by
+design, to reduce complexity.
 
-First, place all your photos inside a dir, and, optionally, rename it to how you want your resulting
-Flickr set to be named.
+First, place all your photos inside a dir, and, optionally,
+rename it to how you want your resulting Flickr set to be named.
 
 Then just
 
