@@ -1,4 +1,4 @@
-flickrupper
+flickruper
 ===========
 
 Flickr CLI multi-threaded uploader, can resume uploads on failures.
@@ -22,7 +22,7 @@ or, on Debian/Ubuntu
 Usage
 =====
 
-**flickrupper** uploads a single directory at once, without recursion into
+**flickruper** uploads a single directory at once, without recursion into
 subdirectories. It cannot upload a single file or several files. This is by
 design, to reduce complexity.
 
@@ -31,14 +31,14 @@ rename it to how you want your resulting Flickr set to be named.
 
 Then just
 
-    ./flickrupper.py DIRNAME
+    ./flickruper.py DIRNAME
     
 If the set exists, it won't upload the same file several times.
     
 If you want tags, and/or other set name, do
 
-    ./flickrupper.py DIRNAME --setname 'Custom set name' --tags 'Tag1 Tag2'
+    ./flickruper.py DIRNAME --setname 'Custom set name' --tags 'Tag1 Tag2'
     
 See --help for other options
     
-    ./flickrupper.py --help
+    ./flickruper.py --help
