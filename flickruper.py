@@ -12,12 +12,11 @@ api_key = '19f22b87fad6fdc0be6b2108332f681a'
 api_secret = '7ca50772a642b783'
 
 LOGLEVEL = logging.DEBUG
-LOGFORMAT = '%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s'
+LOGFORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 logging.basicConfig(level=LOGLEVEL, format=LOGFORMAT)
 
 import flickrapi
-from flickrapi.tokencache import LockingTokenCache
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +106,7 @@ class PhotoSet(object):
             photo_id = photo_or_photo_id
         if self.has_photo(id=photo_id):
             return
-        log.debug('Adding photo %s to photoset "%s', photo_id, self.title)
+        log.debug('Adding photo %s to photoset "%s"', photo_id, self.title)
         self.api.photosets_addPhoto(photoset_id=self.id, photo_id=photo_id)
         self._all_photos.append(Photo(self.api, photo_id, None))
 
@@ -120,16 +119,23 @@ class PhotoSet(object):
 
 class MultithreadedUploader(object):
 
+    # What photo formats to upload.
     PHOTO_RE = re.compile('.*\.(jpg|jpeg|png|gif|tif|tiff)$', re.IGNORECASE)
+    # If number of upload errors is greater than this,
+    MAX_ERRORS = 5
 
-    def __init__(self, dirname, setname=None, tags=None, threads=4):
+    def __init__(self, dirname, setname=None, tags=None, threads=4,
+                 is_public=False):
         self.dirname = dirname
         if not setname:
             setname = os.path.basename(dirname)
+        if isinstance(setname, str):
+            setname = setname.decode('utf-8')
         if not os.path.isdir(dirname):
             raise OSError('Directory "%s" does not exist', dirname)
         self.setname = setname
         self.tags = tags
+        self.is_public = is_public
         self._is_authenticated = False
         self._threadcount = threads
         self.flickr = flickrapi.FlickrAPI(api_key, api_secret)
@@ -137,11 +143,14 @@ class MultithreadedUploader(object):
         self._all_photosets = []
         self._lock = threading.RLock()
         self._semaphore = threading.Semaphore(threads)
+        self._errorcount = 0
+        self._should_quit = threading.Event()
         self.authenticate()
 
     def upload_callback(self, filename, progress, is_done):
         if not is_done:
-            log.debug('Uploaded %s%% of %s', progress, filename)
+            pass
+            # log.debug('Uploaded %s%% of %s', progress, filename)
 
     def get_photoset(self):
         with self._lock:
@@ -193,7 +202,7 @@ class MultithreadedUploader(object):
             log.info('Photo with title "%s" already exists in set "%s"',
                      title, pset.title)
             return
-        log.info('Starting upload of %s', filename)
+
         photo = self.flickr.upload(
             filename, title=title, is_public=False,
             callback=functools.partial(self.upload_callback, filename))
@@ -211,30 +220,75 @@ class MultithreadedUploader(object):
         def upload_in_thread(filename):
             try:
                 self.upload(filename)
+            except KeyboardInterrupt:
+                self._should_quit.set()
+                threading.thread.interrupt_main()
+                return
+            except:
+                log.exception('Error uploading "%s"', filename)
+                self._errorcount += 1
             finally:
                 self._semaphore.release()
 
+        photos_to_upload = []
+
         for fname in os.listdir(self.dirname):
+            fname = os.path.join(self.dirname, fname)
+            if not os.path.isfile(fname):
+                continue
             if not self.PHOTO_RE.match(fname):
                 continue
-            fname = os.path.join(self.dirname, fname)
-            thread = threading.Thread(None, upload_in_thread, args=[fname])
-            self._semaphore.acquire()
-            threads.append(thread)
-            thread.start()
+            photos_to_upload.append(fname)
 
-        for thread in threads:
-            thread.join()
+        try:
+            for index, fname in enumerate(photos_to_upload, start=1):
+                if self._errorcount > self.MAX_ERRORS:
+                    log.critical(
+                        'Too many upload errors: %s. Aborting.',
+                        self._errorcount)
+                    sys.exit(1)
+                if self._should_quit.isSet():
+                    log.warning('Aborting uploads due to user request.')
+                    sys.exit(1)
+                log.info('%s/%s Starting upload of %s',
+                         index, len(photos_to_upload), fname)
+                thread = threading.Thread(None, upload_in_thread, args=[fname])
+                thread.setDaemon(True)
+                self._semaphore.acquire()
+                threads.append(thread)
+                thread.start()
 
+            for thread in threads:
+                if self._should_quit.isSet():
+                    log.warning('Aborting uploads due to user request.')
+                    sys.exit(1)
+                thread.join()
+        except KeyboardInterrupt:
+            log.warning('Aborting uploads due to user request.')
+            sys.exit(1)
+
+        if self._errorcount:
+            log.warning('Finished all uploads with %s errors', self._errorcount)
+
+
+USAGE = """%(prog)s dirname
+
+See --help for details.
+"""
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(usage='%(prog)s dirname [setname]')
+    parser = argparse.ArgumentParser(
+        usage=USAGE, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('dirname',
                         help='The directory, from which to upload photos')
-    parser.add_argument('setname',
-                        help='The name of the set to add the photos to')
-    parser.add_argument('--threads', type=int,
+    parser.add_argument('-s', '--setname',
+                        help='The name of the set to add the photos to. If not'
+                             ' provided, defaults to directory basename.')
+    parser.add_argument('-t', '--threads', type=int,
                         default=4, help='How many concurrent uploads to do')
+    parser.add_argument('-p', '--public', action='store_true',
+                        help='By default, all photos are stored as private. '
+                             'Set this flag to make uploaded photos public.')
 
     args = parser.parse_args()
     if not args.dirname:
@@ -243,10 +297,10 @@ if __name__ == '__main__':
 
     assert args.threads > 0
 
-    if args.setname:
-        args.setname = args.setname.decode('utf-8')
+    args.dirname = args.dirname.rstrip(os.sep)
 
-    uploader = MultithreadedUploader(args.dirname, setname=args.setname,
-                                     threads=int(args.threads))
+    uploader = MultithreadedUploader(
+        args.dirname, setname=args.setname,
+        threads=int(args.threads), is_public=args.public)
 
     uploader.run()
