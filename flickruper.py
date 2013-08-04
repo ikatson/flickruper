@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+
+"""Flickr CLI multi-threaded uploader, can resume uploads on failures.
+
+Now that Flickr gives everyone 1TB of space, it's very handy to store all
+your original photos there. This tool helps upload lots of files to Flickr at
+once.
+"""
+
 import functools
 
 import os
