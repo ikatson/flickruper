@@ -283,8 +283,7 @@ class MultithreadedUploader(object):
             log.info('Photo with title "%s" already exists in set "%s"',
                      title, pset.title)
             return
-
-        is_public = '0' if self.is_public else '1'
+        is_public = '1' if self.is_public else '0'
         photo = self.flickr.upload(
             filename, title=title, is_public=is_public,
             callback=functools.partial(self.upload_callback, filename),
