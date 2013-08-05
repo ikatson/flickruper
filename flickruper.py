@@ -349,7 +349,7 @@ if __name__ == '__main__':
     args.dirname = args.dirname.rstrip(os.sep)
 
     uploader = MultithreadedUploader(
-        args.dirname, setname=args.setname,
+        args.dirname, setname=args.setname, tags=args.tags,
         threads=int(args.threads), is_public=args.public)
 
     uploader.run()
