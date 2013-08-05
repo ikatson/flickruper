@@ -89,7 +89,7 @@ class PhotoSet(object):
         return cls(api, pset.attrib['id'], title, attrs=pset.attrib)
 
     def _walk(self):
-        return self.api.walk_set(self.id)
+        return self.api.walk_set(photoset_id=self.id)
 
     def walk(self, refresh=False):
         """Cached walk function, returns all Photos in this photoset."""
@@ -197,7 +197,7 @@ class MultithreadedUploader(object):
                 thread.setDaemon(True)
                 self._semaphore.acquire()
                 log.info('%s/%s Uploading %s', index, len(photos_to_upload),
-                         fname)                
+                         fname)
                 threads.append(thread)
                 thread.start()
 
@@ -244,7 +244,7 @@ class MultithreadedUploader(object):
     def authenticate(self):
         if self._is_authenticated:
             return
-        self.flickr.authenticate_console(perms="writer")
+        self.flickr.authenticate_console(perms="write")
         self._is_authenticated = True
 
     def get_all_photosets(self, refresh=False):
