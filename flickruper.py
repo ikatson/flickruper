@@ -192,12 +192,12 @@ class MultithreadedUploader(object):
                 if self._should_quit.isSet():
                     log.warning('Aborting uploads due to user request.')
                     sys.exit(1)
-                log.info('%s/%s Uploading %s', index, len(photos_to_upload),
-                         fname)
                 thread = threading.Thread(
                     None, self._upload_in_thread, args=[fname])
                 thread.setDaemon(True)
                 self._semaphore.acquire()
+                log.info('%s/%s Uploading %s', index, len(photos_to_upload),
+                         fname)                
                 threads.append(thread)
                 thread.start()
 
