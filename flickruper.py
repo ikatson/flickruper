@@ -137,8 +137,9 @@ class MultithreadedUploader(object):
 
     # What photo formats to upload.
     PHOTO_RE = re.compile('.*\.(jpg|jpeg|png|gif|tif|tiff)$', re.IGNORECASE)
-    # If number of upload errors is greater than this,
-    MAX_ERRORS = 5
+    # If percent of upload errors is greater than this, the uploader is
+    # aborted.
+    MAX_ERROR_PERCENT = 2
 
     def __init__(self, dirname, setname=None, tags=None, threads=4,
                  is_public=False):
@@ -182,9 +183,11 @@ class MultithreadedUploader(object):
 
         photos_to_upload = self.get_photos_to_upload()
 
+        errors_allowed = len(photos_to_upload) / 100.0 * self.MAX_ERROR_PERCENT
+
         try:
             for index, fname in enumerate(photos_to_upload, start=1):
-                if self._errorcount > self.MAX_ERRORS:
+                if self._errorcount > errors_allowed:
                     log.critical(
                         'Too many upload errors: %s. Aborting.',
                         self._errorcount)
