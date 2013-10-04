@@ -89,7 +89,7 @@ class PhotoSet(object):
         return cls(api, pset.attrib['id'], title, attrs=pset.attrib)
 
     def _walk(self):
-        return self.api.walk_set(self.id)
+        return self.api.walk_set(photoset_id=self.id)
 
     def walk(self, refresh=False):
         """Cached walk function, returns all Photos in this photoset."""
@@ -195,12 +195,12 @@ class MultithreadedUploader(object):
                 if self._should_quit.isSet():
                     log.warning('Aborting uploads due to user request.')
                     sys.exit(1)
-                log.info('%s/%s Uploading %s', index, len(photos_to_upload),
-                         fname)
                 thread = threading.Thread(
                     None, self._upload_in_thread, args=[fname])
                 thread.setDaemon(True)
                 self._semaphore.acquire()
+                log.info('%s/%s Uploading %s', index, len(photos_to_upload),
+                         fname)
                 threads.append(thread)
                 thread.start()
 
@@ -247,7 +247,7 @@ class MultithreadedUploader(object):
     def authenticate(self):
         if self._is_authenticated:
             return
-        self.flickr.authenticate_console(perms="writer")
+        self.flickr.authenticate_console(perms="write")
         self._is_authenticated = True
 
     def get_all_photosets(self, refresh=False):
@@ -352,7 +352,7 @@ if __name__ == '__main__':
     args.dirname = args.dirname.rstrip(os.sep)
 
     uploader = MultithreadedUploader(
-        args.dirname, setname=args.setname,
+        args.dirname, setname=args.setname, tags=args.tags,
         threads=int(args.threads), is_public=args.public)
 
     uploader.run()

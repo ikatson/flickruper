@@ -10,21 +10,24 @@ once.
 Installation
 ============
 
-The only dependency is "flickrapi".
+The only dependency is "flickrapi". Unfortunately, the version in Ubuntu's repositories
+is too old, so you still need to install it with pip.
 
-    pip install flickrapi
+    pip install 'flickrapi>=1.4.2'
 
-or, on Debian/Ubuntu
-
-    sudo apt-get install python-flickrapi
-
+If you don't have pip, you can install it with
+    
+    sudo apt-get install python-pip
+    
+if on Debian/Ubuntu, or follow the instructions here
+http://www.pip-installer.org/en/latest/installing.html
 
 Usage
 =====
 
 **flickruper** uploads a single directory at once, without recursion into
-subdirectories. It cannot upload a single file or several files. This is by
-design, to reduce complexity.
+subdirectories. It cannot upload a single file or several files. This may
+change in the future.
 
 First, place all your photos inside a dir, and, optionally,
 rename it to how you want your resulting Flickr set to be named.
@@ -42,3 +45,8 @@ If you want tags, and/or other set name, do
 See --help for other options
     
     ./flickruper.py --help
+
+**Note:**
+
+At first launch, flickruper requires a browser to get a token. If you want to use it on a headless server,
+launch it first on your desktop, get the token, and copy the **~/.flickr** directory to your server.
