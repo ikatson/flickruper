@@ -28,6 +28,29 @@ import flickrapi
 
 log = logging.getLogger(__name__)
 
+FS_ENC = sys.getfilesystemencoding()
+
+def unicode_path(path):
+    if isinstance(path, unicode):
+        return path
+    try:
+        return path.decode(FS_ENC)
+    except UnicodeDecodeError:
+        log.warning('Cannot decode path %s as %s', path, FS_ENC)
+        return path
+
+
+def force_utf8(string):
+    if isinstance(string, unicode):
+        return string.encode('utf-8')
+    return string
+
+
+def force_fs_encoding(string):
+    if isinstance(string, unicode):
+        return string.encode(FS_ENC)
+    return string
+
 
 class Photo(object):
     """flickr Photo."""
@@ -153,11 +176,10 @@ class MultithreadedUploader(object):
           threads: how many concurrent uploads to start
           is_public: if True, all uploaded photos will be public.
         """
-        self.dirname = dirname
+        self.dirname = unicode_path(dirname)
         if not setname:
             setname = os.path.basename(dirname)
-        if isinstance(setname, str):
-            setname = setname.decode('utf-8')
+        setname = unicode_path(setname)
         if not os.path.isdir(dirname):
             raise OSError('Directory "%s" does not exist', dirname)
         self.setname = setname.strip()
@@ -267,7 +289,8 @@ class MultithreadedUploader(object):
 
     def get_title(self, filename):
         """Get photo title from filename."""
-        return os.path.basename(filename)
+        filename = os.path.basename(filename)
+        return unicode_path(filename)
 
     def get_photos_to_upload(self):
         """Get a list of filenames that should be uploaded to flickr."""
@@ -296,9 +319,9 @@ class MultithreadedUploader(object):
             return
         is_public = '1' if self.is_public else '0'
         photo = self.flickr.upload(
-            filename, title=title, is_public=is_public,
-            callback=functools.partial(self.upload_callback, filename),
-            tags=self.tags)
+            force_fs_encoding(filename), title=force_utf8(title),
+            is_public=is_public, callback=functools.partial(
+                self.upload_callback, filename), tags=self.tags)
         photo_id = photo.find('photoid').text
         log.debug('Uploaded %s', filename)
         if not pset:
