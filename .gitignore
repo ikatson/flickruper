@@ -8,3 +8,6 @@
 *.orig
 *.DS_Store
 .idea/
+build/
+dist/
+MANIFEST
