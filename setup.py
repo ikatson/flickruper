@@ -10,7 +10,7 @@ setup(
     entry_points={
         'console_scripts': ['flickruper = flickruper:main'],
     },
-    url='http://pypi.python.org/pypi/flickruper/',
+    url='https://github.com/ikatson/flickruper',
     license='LICENSE.txt',
     description='Multi-threaded uploader for Flickr',
     long_description=open('README.rst').read(),
