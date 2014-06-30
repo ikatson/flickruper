@@ -39,7 +39,7 @@ Then just
 
 ::
 
-    ./flickruper.py DIRNAME
+    flickruper DIRNAME
 
 If the set exists, it won't upload the same file several times.
 
@@ -47,13 +47,13 @@ If you want tags, and/or other set name, do
 
 ::
 
-    ./flickruper.py DIRNAME --setname 'Custom set name' --tags 'Tag1 Tag2'
+    flickruper DIRNAME --setname 'Custom set name' --tags 'Tag1 Tag2'
 
 See --help for other options
 
 ::
 
-    ./flickruper.py --help
+    flickruper --help
 
 **Note:**
 
