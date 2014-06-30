@@ -10,21 +10,19 @@ Flickr at once.
 Installation
 ============
 
-The only dependency is "flickrapi". Unfortunately, the version in
-Ubuntu's repositories is too old, so you still need to install it with
-pip.
+You can install flickruper with
 
 ::
 
-    pip install 'flickrapi>=1.4.2'
+    pip install flickruper
 
-If you don't have pip, you can install it with
+If you don't have pip, you can install it with this command on Debian/Ubuntu
 
 ::
 
     sudo apt-get install python-pip
 
-if on Debian/Ubuntu, or follow the instructions here
+If not on Debian/Ubuntu, follow the instructions here
 http://www.pip-installer.org/en/latest/installing.html
 
 Usage
