@@ -15,11 +15,23 @@ import re
 import sys
 import threading
 
+# flickrapi does logging.basicConfig during import-time, which is a
+# bad practice, and prevents us calling it again in the main()
+# function. So disabling logging.basicConfig during flickrapi import.
+
+orig_logging_basicConfig = logging.basicConfig
+logging.basicConfig = lambda *args, **kwargs: None
 import flickrapi
+logging.basicConfig = orig_logging_basicConfig
 
 API_KEY = '19f22b87fad6fdc0be6b2108332f681a'
 API_SECRET = '7ca50772a642b783'
-FS_ENC = sys.getfilesystemencoding()
+FILESYSTEM_ENCODING = sys.getfilesystemencoding()
+USAGE = """%(prog)s dirname
+
+See --help for details.
+"""
+
 
 log = logging.getLogger(__name__)
 
@@ -29,9 +41,9 @@ def unicode_path(path):
     if isinstance(path, unicode):
         return path
     try:
-        return path.decode(FS_ENC)
+        return path.decode(FILESYSTEM_ENCODING)
     except UnicodeDecodeError:
-        log.warning('Cannot decode path %s as %s', path, FS_ENC)
+        log.warning('Cannot decode path %s as %s', path, FILESYSTEM_ENCODING)
         return path
 
 
@@ -45,7 +57,7 @@ def force_utf8(string):
 def force_fs_encoding(string):
     """Encode the argument to filesystem encoding, if its unicode."""
     if isinstance(string, unicode):
-        return string.encode(FS_ENC)
+        return string.encode(FILESYSTEM_ENCODING)
     return string
 
 
@@ -167,8 +179,8 @@ class MultithreadedUploader(object):
         """
         Args:
           dirname: a directory to upload the photos from
-          setname: the name of the set to upload all photos to. If not provided,
-            the basename of the dir will be used. A new set
+          setname: the name of the set to upload all photos to. If not
+            provided, the basename of the dir will be used. A new set
             will be created only if a set with this name does not exist.
           tags: either a space-delimited string, or a list
           threads: how many concurrent uploads to start
@@ -232,7 +244,8 @@ class MultithreadedUploader(object):
             sys.exit(1)
 
         if self._errorcount:
-            log.warning('Finished all uploads with %s errors', self._errorcount)
+            log.warning(
+                'Finished all uploads with %s errors', self._errorcount)
 
     def upload_callback(self, filename, progress, is_done):
         """You can implement this print progress for each photo."""
@@ -340,12 +353,7 @@ class MultithreadedUploader(object):
             self._semaphore.release()
 
 
-USAGE = """%(prog)s dirname
-
-See --help for details.
-"""
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         usage=USAGE, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('dirname',
@@ -363,7 +371,7 @@ if __name__ == '__main__':
 
     loglevel = logging.INFO
     logformat = '%(asctime)s - %(levelname)s - %(message)s'
-    
+
     logging.basicConfig(level=loglevel, format=logformat)
 
     args = parser.parse_args()
@@ -381,3 +389,7 @@ if __name__ == '__main__':
         threads=int(args.threads), is_public=args.public)
 
     uploader.run()
+
+
+if __name__ == '__main__':
+    main()
