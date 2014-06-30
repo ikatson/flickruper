@@ -7,30 +7,25 @@ your original photos there. This tool helps upload lots of files to Flickr at
 once.
 """
 
+import argparse
 import functools
-
-import os
 import logging
+import os
 import re
 import sys
-import argparse
 import threading
-
-api_key = '19f22b87fad6fdc0be6b2108332f681a'
-api_secret = '7ca50772a642b783'
-
-LOGLEVEL = logging.INFO
-LOGFORMAT = '%(asctime)s - %(levelname)s - %(message)s'
-
-logging.basicConfig(level=LOGLEVEL, format=LOGFORMAT)
 
 import flickrapi
 
-log = logging.getLogger(__name__)
-
+API_KEY = '19f22b87fad6fdc0be6b2108332f681a'
+API_SECRET = '7ca50772a642b783'
 FS_ENC = sys.getfilesystemencoding()
 
+log = logging.getLogger(__name__)
+
+
 def unicode_path(path):
+    """Ensure the filesystem path is unicode, decode if not."""
     if isinstance(path, unicode):
         return path
     try:
@@ -41,19 +36,21 @@ def unicode_path(path):
 
 
 def force_utf8(string):
+    """Encode the argument to utf-8, if its unicode."""
     if isinstance(string, unicode):
         return string.encode('utf-8')
     return string
 
 
 def force_fs_encoding(string):
+    """Encode the argument to filesystem encoding, if its unicode."""
     if isinstance(string, unicode):
         return string.encode(FS_ENC)
     return string
 
 
 class Photo(object):
-    """flickr Photo."""
+    """A flickr Photo."""
 
     def __init__(self, api, id, title, photoset=None, attrs=None):
         self.api = api
@@ -160,6 +157,7 @@ class MultithreadedUploader(object):
 
     # What photo formats to upload.
     PHOTO_RE = re.compile('.*\.(jpg|jpeg|png|gif|tif|tiff)$', re.IGNORECASE)
+
     # If percent of upload errors is greater than this, the uploader is
     # aborted.
     MAX_ERROR_PERCENT = 2
@@ -189,7 +187,7 @@ class MultithreadedUploader(object):
         self.is_public = is_public
         self._is_authenticated = False
         self._threadcount = threads
-        self.flickr = flickrapi.FlickrAPI(api_key, api_secret)
+        self.flickr = flickrapi.FlickrAPI(API_KEY, API_SECRET)
         self._photoset = None
         self._all_photosets = []
         self._lock = threading.RLock()
@@ -202,9 +200,7 @@ class MultithreadedUploader(object):
         """The main function to start the uploader."""
 
         threads = []
-
         photos_to_upload = self.get_photos_to_upload()
-
         errors_allowed = len(photos_to_upload) / 100.0 * self.MAX_ERROR_PERCENT
 
         try:
@@ -365,7 +361,13 @@ if __name__ == '__main__':
                         help='By default, all photos are stored as private. '
                              'Set this flag to make uploaded photos public.')
 
+    loglevel = logging.INFO
+    logformat = '%(asctime)s - %(levelname)s - %(message)s'
+    
+    logging.basicConfig(level=loglevel, format=logformat)
+
     args = parser.parse_args()
+
     if not args.dirname:
         parser.print_usage()
         sys.exit(1)
